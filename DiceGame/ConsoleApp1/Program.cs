@@ -10,9 +10,17 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
-            Die Die1 = new Die();
-   
-            Console.WriteLine(Die1.Roll());
+
+            SevensOut sevensOut = new SevensOut();
+
+            sevensOut.StartGame(false);
+
+            // Player can choose either game to play through a menu.
+            // Play with partner(on the same computer), or against the computer.
+            // Should be a console implementation - but scope for extending it to a GUI application should be possible.
+
+            Console.ReadLine();
+
         }
     }
 }
