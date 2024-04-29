@@ -112,7 +112,7 @@ namespace ConsoleApp1
             return threeOrMore.TestGame();
         }
 
-        protected interface GameInterface
+        protected interface IGameInterface
         {
             void StartGame(bool TwoPlayer);
             void StartTwoPlayerGame(bool Testing);
@@ -120,7 +120,7 @@ namespace ConsoleApp1
             int TestGame();
         }
 
-        class ThreeOrMore : Game, GameInterface
+        class ThreeOrMore : Game, IGameInterface
         {
 
             public void StartGame(bool TwoPlayer)
@@ -412,7 +412,7 @@ namespace ConsoleApp1
 
         }
 
-        class SevensOut : Game, GameInterface
+        class SevensOut : Game, IGameInterface
         {
             public void StartGame(bool TwoPlayer)
             {

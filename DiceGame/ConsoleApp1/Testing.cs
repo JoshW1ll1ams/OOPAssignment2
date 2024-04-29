@@ -35,10 +35,4 @@ namespace ConsoleApp1
             Console.WriteLine("ThreeOrMore final return value: " + ThreeOrMoreResult);
         }
     }
-
-
-    //Create a Game object.
-    //Use debug.assert() to verify:
-    //Sevens Out: Total of sum, stop if total = 7
-    //Three Or More: Scores set and added correctly, recognise when total >= 20
 }
