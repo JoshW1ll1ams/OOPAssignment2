@@ -8,6 +8,23 @@ namespace ConsoleApp1
 {
     internal class Game
     {
+        Statistics CurrentStatisticsInstance;
+        Testing CurrentTestingInstance;
+
+        public Game()
+        {
+            // Create instance of Statistics and try create a file if ones doesnt already exist
+            CurrentTestingInstance = new Testing();
+
+            // Create instance of Statistics and try create a file if ones doesnt already exist
+            CurrentStatisticsInstance = new Statistics();
+            CurrentStatisticsInstance.TryCreateStatisticsFile();
+        }
+
+        public void PrintStatistics()
+        {
+            CurrentStatisticsInstance.PrintStatistics();
+        }
 
         public void StartThreeOrMoreGameLoop(bool TwoPlayer)
         {
@@ -55,6 +72,7 @@ namespace ConsoleApp1
 
                 if (Input.Length < 3 || Input.Length > 5)
                 {
+                    Console.Clear();
                     Console.WriteLine("Entry invalid. Try again.");
                 }
             }
@@ -62,12 +80,44 @@ namespace ConsoleApp1
             return Input;
         }
 
+        public void PromptPlayerEnterName(string PlayerName)
+        {
+            Console.BackgroundColor = ConsoleColor.Green;
+            Console.WriteLine(PlayerName + " please enter your name: ");
+            Console.BackgroundColor = ConsoleColor.Black;
+        }
+
+        public void PromptPlayerRoll(string PlayerName)
+        {
+            Console.BackgroundColor = ConsoleColor.Green;
+            if (PlayerName.Equals("Computer"))
+            {
+                Console.WriteLine("Press any button for the computer to take their turn...");
+            }
+            else
+            {
+                Console.WriteLine(PlayerName + ", press enter to roll!");
+            }
+            Console.BackgroundColor = ConsoleColor.Black;
+        }
+
+        public int TestSevensOut()
+        {
+            SevensOut sevensOut = new SevensOut();
+            return sevensOut.TestGame();
+        }
+        public int TestThreeOrMore()
+        {
+            ThreeOrMore threeOrMore = new ThreeOrMore();
+            return threeOrMore.TestGame();
+        }
+
         protected interface GameInterface
         {
             void StartGame(bool TwoPlayer);
-            void StartTwoPlayerGame();
+            void StartTwoPlayerGame(bool Testing);
             void StartComputerGame();
-  
+            int TestGame();
         }
 
         class ThreeOrMore : Game, GameInterface
@@ -77,7 +127,7 @@ namespace ConsoleApp1
             {
                 if (TwoPlayer)
                 {
-                    StartTwoPlayerGame();
+                    StartTwoPlayerGame(false);
                 }
                 else
                 {
@@ -85,33 +135,62 @@ namespace ConsoleApp1
                 }
             }
 
-            public void StartTwoPlayerGame()
-            {
-                Console.WriteLine("Starting Three or more Game, Player 1 vs Player 2, the first to 20 or more wins!");
 
+            // Test game will run the two player version of the game without any userinput, it will just display the rolls
+            // The final highest player score will be logged to ensure it is 20 or greater
+            int HighestPlayerScore = 0;
+
+            public int TestGame()
+            {
+                StartTwoPlayerGame(true);
+
+                return HighestPlayerScore;
+            }
+
+            public void StartTwoPlayerGame(bool Testing)
+            {
                 int Player1Total = 0;
                 int Player2Total = 0;
+                String Player1Name = "";
+                String Player2Name = "";
 
                 bool Gameover = false;
 
-                //Player 1 and two both set there names
-                Console.WriteLine("Player 1 please enter your name: ");
+                if (!Testing)
+                {
+                    Console.WriteLine("Starting Three or more Game, Player 1 vs Player 2, the first to 20 or more wins!");
 
-                String Player1Name = GetUserNameInput();
+                    //Player 1 and two both set there names
 
-                Console.WriteLine("Player 2 please enter your name: ");
+                    PromptPlayerEnterName("Player 1");
+                    Player1Name = GetUserNameInput();
 
-                String Player2Name = GetUserNameInput();
+                    Console.Clear();
+
+                    PromptPlayerEnterName("Player 2");
+
+                    Player2Name = GetUserNameInput();
+
+                    Console.Clear();
+                }
+               
 
                 // Main game loop will run until game over is set to true
                 while (!Gameover)
                 {
-                    Console.WriteLine(Player1Name + ", press any button to roll!");
-                    Console.ReadLine();
+                    if(!Testing)
+                    {
+                        PromptPlayerRoll(Player1Name);
+
+                        Console.ReadLine();
+
+                        Console.Clear();
+                    }
 
                     //Player 1 rolls and the result is added to there total
                     int Player1Roll = Roll5Die();
 
+                 
                     // If player got any matches add the relevant score
                     if (Player1Roll != -1)
                     {
@@ -122,6 +201,7 @@ namespace ConsoleApp1
                     {
                         Console.WriteLine(Player1Name + " no matches for you! Your score is still: " + Player1Total);
                     }
+                    
 
 
                     // Game is over if total is 20 or more
@@ -133,21 +213,32 @@ namespace ConsoleApp1
                     // If player 1 total isnt 20 or more player 2 takes there turn
                     if (!Gameover)
                     {
-                        Console.WriteLine(Player2Name + ", press any button to roll!");
-                        Console.ReadLine();
+                        if(!Testing)
+                        {
+                            PromptPlayerRoll(Player2Name);
+
+                            Console.ReadLine();
+
+                            Console.Clear();
+                        }
 
                         int Player2Roll = Roll5Die();
 
+            
                         // If player got any matches add the relevant score
                         if (Player2Roll != -1)
                         {
                             Player2Total += Player2Roll;
+
                             Console.WriteLine(Player2Name + " you get " + Player2Roll + " points, your new score is: " + Player2Total);
                         }
                         else
                         {
+
                             Console.WriteLine(Player2Name + " no matches for you! Your score is still: " + Player2Total);
                         }
+                        
+
 
                         // Game is over if total is 20 or more
                         if (Player2Total >= 20)
@@ -156,7 +247,29 @@ namespace ConsoleApp1
                         }
                     }
                 }
-                EndGame(Player1Total, Player2Total, Player1Name, Player2Name);
+                if(!Testing)
+                {
+                    // Try add both high scores to stat list 
+                    CurrentStatisticsInstance.TryAddHighScore(Player1Name, Player1Total, "ThreeOrMore");
+                    CurrentStatisticsInstance.TryAddHighScore(Player2Name, Player2Total, "ThreeOrMore");
+
+                    EndGame(Player1Total, Player2Total, Player1Name, Player2Name);
+
+                    Console.WriteLine("Press enter to return to main menu...");
+                    Console.ReadLine();
+                    Program.menu.OpenMenu();
+                }
+                else
+                {
+                    if(Player1Total >= Player2Total)
+                    {
+                        HighestPlayerScore = Player1Total;
+                    }
+                    else
+                    {
+                        HighestPlayerScore = Player2Total;
+                    }
+                }
             }
 
             public void StartComputerGame()
@@ -169,16 +282,19 @@ namespace ConsoleApp1
                 bool Gameover = false;
 
                 //Player 1 and two both set there names
-                Console.WriteLine("Player 1 please enter your name: ");
+                PromptPlayerEnterName("Player 1");
 
                 String Player1Name = GetUserNameInput();
 
+                Console.Clear();
 
                 // Main game loop will run until game over is set to true
                 while (!Gameover)
                 {
-                    Console.WriteLine(Player1Name + ", press any button to roll!");
+                    PromptPlayerRoll(Player1Name);
+
                     Console.ReadLine();
+                    Console.Clear();
 
                     //Player 1 rolls and the result is added to there total
                     int Player1Roll = Roll5Die();
@@ -204,7 +320,10 @@ namespace ConsoleApp1
                     // If player 1 total isnt 20 or more player 2 takes there turn
                     if (!Gameover)
                     {
-                        Console.WriteLine("Computer rolls...");
+                        PromptPlayerRoll("Computer");
+
+                        Console.ReadLine();
+                        Console.Clear();
 
                         int ComputerRoll = Roll5Die();
 
@@ -226,7 +345,13 @@ namespace ConsoleApp1
                         }
                     }
                 }
+                // Try add player highscore to stat list
+                CurrentStatisticsInstance.TryAddHighScore(Player1Name, Player1Total, "ThreeOrMore");
                 EndGame(Player1Total, ComputerTotal, Player1Name);
+
+                Console.WriteLine("Press enter to return to main menu...");
+                Console.ReadLine();
+                Program.menu.OpenMenu();
             }
 
             private int Roll5Die()
@@ -293,7 +418,7 @@ namespace ConsoleApp1
             {
                 if (TwoPlayer)
                 {
-                    StartTwoPlayerGame();
+                    StartTwoPlayerGame(false);
                 }
                 else
                 {
@@ -301,36 +426,65 @@ namespace ConsoleApp1
                 }
             }
 
-            public void StartTwoPlayerGame()
+            // Test game will run the two player version of the game without any userinput, it will just display the rolls
+            // The last player roll will be logged to esnure it is 7 for the correct ending of the game
+            int LastPlayerRoll = 0;
+
+            public int TestGame()
+            {
+                StartTwoPlayerGame(true);
+
+                return LastPlayerRoll;
+            }
+
+            public void StartTwoPlayerGame(bool Testing)
             {
                 int Player1Total = 0;
                 int Player2Total = 0;
-
+                String Player1Name = "";
+                String Player2Name = "";
                 bool Gameover = false;
 
-                Console.WriteLine("Starting SevensOut Game, Player 1 vs Player 2, the first to 7 wins!");
+                if (!Testing)
+                {
+                             
+                    Console.WriteLine("Starting SevensOut Game, Player 1 vs Player 2, the first to 7 wins!");
 
-                //Player 1 and two both set there names
-                Console.WriteLine("Player 1 please enter your name: ");
+                    //Player 1 and two both set there names
+                    PromptPlayerEnterName("Player 1");
 
-                String Player1Name = GetUserNameInput();
+                    Player1Name = GetUserNameInput();
 
-                Console.WriteLine("Player 2 please enter your name: ");
+                    Console.Clear();
 
-                String Player2Name = GetUserNameInput();
+                    PromptPlayerEnterName("Player 2");
+
+                    Player2Name = GetUserNameInput();
+
+                    Console.Clear();
+                }
 
                 // Main game loop will run until game over is set to true
                 while (!Gameover)
                 {
-                    Console.WriteLine(Player1Name + ", press any button to roll!");
-                    Console.ReadLine();
+                    if (!Testing)
+                    {
+                        PromptPlayerRoll(Player1Name);
+
+                        Console.ReadLine();
+
+                        Console.Clear();
+                    }
 
                     //Player 1 rolls and the result is added to there total
                     int Player1Roll = RollTwoDie();
 
                     Player1Total += Player1Roll;
 
-                    Console.WriteLine(Player1Name + ", you rolled " + Player1Roll + ", your new total is " + Player1Total);
+                    if (!Testing)
+                    {
+                        Console.WriteLine(Player1Name + ", you rolled " + Player1Roll + ", your new total is " + Player1Total);
+                    }
 
                     // Game is over if roll is 7
                     if (Player1Roll == 7)
@@ -340,14 +494,24 @@ namespace ConsoleApp1
                     // If player 1 didnt roll 7 player two takes there turn
                     if (!Gameover)
                     {
-                        Console.WriteLine(Player2Name + ", press any button to roll!");
-                        Console.ReadLine();
+                        if(!Testing)
+                        {
+                            PromptPlayerRoll(Player2Name);
+
+                            Console.ReadLine();
+
+                            Console.Clear();
+                        }
+                      
 
                         int Player2Roll = RollTwoDie();
 
                         Player2Total += Player2Roll;
 
-                        Console.WriteLine(Player2Name + ", you rolled " + Player2Roll + ", your new total is " + Player2Total);
+                        if (!Testing)
+                        {
+                            Console.WriteLine(Player2Name + ", you rolled " + Player2Roll + ", your new total is " + Player2Total);
+                        }
 
                         // Game is over if roll is 7
                         if (Player2Roll == 7)
@@ -356,7 +520,18 @@ namespace ConsoleApp1
                         }
                     }
                 }
-                EndGame(Player1Total, Player2Total, Player1Name, Player2Name);
+                if(!Testing)
+                {
+                    // Try add both high scores to stat list 
+                    CurrentStatisticsInstance.TryAddHighScore(Player1Name, Player1Total, "SevensOut");
+                    CurrentStatisticsInstance.TryAddHighScore(Player2Name, Player2Total, "SevensOut");
+
+                    EndGame(Player1Total, Player2Total, Player1Name, Player2Name);
+
+                    Console.WriteLine("Press enter to return to main menu...");
+                    Console.ReadLine();
+                    Program.menu.OpenMenu();
+                }
             }
 
             public void StartComputerGame()
@@ -369,16 +544,20 @@ namespace ConsoleApp1
                 Console.WriteLine("Starting SevensOut Game, Player 1 vs Computer, the first to 7 wins!");
 
                 //Player 1 sets there name
-                Console.WriteLine("Player 1 please enter your name: ");
+                PromptPlayerEnterName("Player 1");
 
                 String Player1Name = GetUserNameInput();
 
+                Console.Clear();
 
                 // Main game loop will run until game over is set to true
                 while (!Gameover)
                 {
-                    Console.WriteLine(Player1Name + ", press any button to roll!");
+                    PromptPlayerRoll(Player1Name);
+
                     Console.ReadLine();
+
+                    Console.Clear();
 
                     //Player 1 rolls and the result is added to there total
                     int Player1Roll = RollTwoDie();
@@ -395,6 +574,9 @@ namespace ConsoleApp1
                     // If player 1 didnt roll 7 the computer takes its turn
                     if (!Gameover)
                     {
+                        PromptPlayerRoll("Computer");
+                        Console.ReadLine();
+                        Console.Clear();
 
                         int ComputerRoll = RollTwoDie();
 
@@ -409,9 +591,15 @@ namespace ConsoleApp1
                         }
                     }
                 }
-                EndGame(Player1Total, ComputerTotal, Player1Name);
-            }
+                // Try add high score of player one 
+                CurrentStatisticsInstance.TryAddHighScore(Player1Name, Player1Total, "SevensOut");
 
+                EndGame(Player1Total, ComputerTotal, Player1Name);
+
+                Console.WriteLine("Press enter to return to main menu...");
+                Console.ReadLine();    
+                Program.menu.OpenMenu();
+            }
 
             // Method rolls two die and returns the result
             private int RollTwoDie()
@@ -425,13 +613,14 @@ namespace ConsoleApp1
                 // If double return both numbers added and multiplied, if not return both numbers added
                 if (DieRoll1 == DieRoll2)
                 {
-                    Console.WriteLine(DieRoll1);
                     Console.WriteLine("Die 1: " + DieRoll1 + "\nDie 2: " + DieRoll2 + "\nThats double! Total: " + ((DieRoll1 + DieRoll2) * 2));
+                    LastPlayerRoll = (DieRoll1 + DieRoll2) * 2;
                     return (DieRoll1 + DieRoll2) * 2;
                 }
                 else
                 {
                     Console.WriteLine("Die 1: " + DieRoll1 + "\nDie 2: " + DieRoll2 + "\nTotal: " + (DieRoll1 + DieRoll2));
+                    LastPlayerRoll = DieRoll1 + DieRoll2;
                     return DieRoll1 + DieRoll2;
                 }
             }
